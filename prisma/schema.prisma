@@ -1,0 +1,143 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =======================
+// ENUMS
+// =======================
+
+enum Role {
+  ADMIN
+  DELEGUE
+}
+
+// =======================
+// USER
+// =======================
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  role      Role      @default(DELEGUE)
+  bureau    BureauVote? @relation("UserBureau", fields: [bureauId], references: [id])
+  bureauId  String?     @unique
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// =======================
+// ARRONDISSEMENT
+// =======================
+
+model Arrondissement {
+  id        String   @id @default(uuid())
+  nom       String   @unique
+
+  bureaux   BureauVote[]
+
+  createdAt DateTime @default(now())
+}
+
+// =======================
+// BUREAU DE VOTE
+// =======================
+
+model BureauVote {
+  id                String   @id @default(uuid())
+
+  arrondissementId  String
+  arrondissement    Arrondissement @relation(fields: [arrondissementId], references: [id])
+
+  villageQuartier   String
+  centreVote        String
+  codeBureau        String   // PV01, PV02...
+
+  // Relation optionnelle 1:1 avec User
+  delegue           User? @relation("UserBureau")
+  delegueId         String?
+
+  resultat          Resultat?
+
+  createdAt         DateTime @default(now())
+}
+
+// =======================
+// RESULTATS
+// =======================
+
+model Resultat {
+  id              String   @id @default(uuid())
+
+  bureauId        String   @unique
+  bureau          BureauVote @relation(fields: [bureauId], references: [id])
+
+  totalVotes      Int
+  votesCandidat   Int
+
+  pvImageUrl      String
+
+  submittedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
