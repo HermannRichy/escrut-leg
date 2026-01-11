@@ -81,7 +81,10 @@ export default function Login() {
             >
                 <header className="space-y-2">
                     <h1 className="text-2xl font-semibold">
-                        Bienvenue sur eScrut
+                        Bienvenue sur eScrut{" "}
+                        <span className="text-red-700">
+                            version pour les législatives.
+                        </span>
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         Plateforme de suivi de scrutin en ligne sécurisée et
